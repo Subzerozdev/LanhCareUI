@@ -15,14 +15,44 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const { isAuthenticated, checkAuth, user } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     const initAuth = async () => {
       try {
+        // Check auth từ localStorage ngay lập tức (sync)
+        if (typeof window !== 'undefined') {
+          const token = localStorage.getItem('token');
+          const userStr = localStorage.getItem('user');
+          
+          if (token && userStr) {
+            try {
+              const user = JSON.parse(userStr);
+              if (user.role === 'ADMIN') {
+                // Set state ngay để render không bị chặn
+                useAuthStore.setState({
+                  token,
+                  user,
+                  isAuthenticated: true,
+                });
+                setAuthChecked(true);
+                setIsLoading(false);
+                return; // Không cần gọi checkAuth nữa
+              }
+            } catch (e) {
+              // Parse error, continue với checkAuth
+            }
+          }
+        }
+        
+        // Nếu không có token trong localStorage, gọi checkAuth
         await checkAuth();
       } catch (error) {
-        console.error('Auth check failed:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Auth check failed:', error);
+        }
       } finally {
+        setAuthChecked(true);
         setIsLoading(false);
       }
     };
@@ -31,16 +61,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }, [checkAuth]);
 
   useEffect(() => {
-    if (!isLoading) {
+    if (authChecked && !isLoading) {
       if (!isAuthenticated) {
         router.push('/login');
       } else if (user && user.role !== 'ADMIN') {
         router.push('/login');
       }
     }
-  }, [isLoading, isAuthenticated, user, router]);
+  }, [authChecked, isLoading, isAuthenticated, user, router]);
 
-  if (isLoading) {
+  if (isLoading || !authChecked) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>

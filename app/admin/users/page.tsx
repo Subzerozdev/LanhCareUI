@@ -6,6 +6,7 @@ import { adminApi, AdminUserResponse, AdminCreateUserRequest, AdminUpdateUserReq
 import toast from 'react-hot-toast';
 import { Search, Plus, Edit, Trash2, Eye, Filter, Download } from 'lucide-react';
 import UserModal from '@/components/users/UserModal';
+import { useDebounce } from '@/lib/hooks/useDebounce';
 
 export default function UsersPage() {
   const [users, setUsers] = useState<AdminUserResponse[]>([]);
@@ -14,6 +15,7 @@ export default function UsersPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [search, setSearch] = useState('');
+  const debouncedSearch = useDebounce(search, 500); // Debounce search với 500ms
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -28,12 +30,14 @@ export default function UsersPage() {
         sortBy: 'id',
         sortDir: 'DESC',
       };
-      if (search) params.search = search;
+      if (debouncedSearch) params.search = debouncedSearch;
       if (roleFilter) params.role = roleFilter;
       if (statusFilter) params.status = statusFilter;
 
       const response = await adminApi.users.getAll(params);
-      console.log('Users API response:', response);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Users API response:', response);
+      }
       
       // Backend trả về: ApiResponse<PageResponse<AdminUserResponse>>
       // Axios response: { data: ApiResponse }
@@ -98,7 +102,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     fetchUsers();
-  }, [page, search, roleFilter, statusFilter]);
+  }, [page, debouncedSearch, roleFilter, statusFilter]);
 
   const handleCreate = () => {
     setEditingUser(null);

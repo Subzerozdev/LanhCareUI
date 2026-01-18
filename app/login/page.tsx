@@ -27,17 +27,18 @@ export default function LoginPage() {
       
       // Kiểm tra state sau khi login
       const state = useAuthStore.getState();
-      console.log('State sau khi login:', {
-        isAuthenticated: state.isAuthenticated,
-        user: state.user,
-        token: state.token ? 'Có token' : 'Không có token',
-      });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('State sau khi login:', {
+          isAuthenticated: state.isAuthenticated,
+          user: state.user,
+          token: state.token ? 'Có token' : 'Không có token',
+        });
+      }
       
       if (state.isAuthenticated && state.user?.role === 'ADMIN') {
         toast.success('Đăng nhập thành công!');
-        // Redirect ngay lập tức
+        // Redirect ngay lập tức (không cần router.refresh)
         router.push('/dashboard');
-        router.refresh();
       } else {
         throw new Error('Đăng nhập thành công nhưng không có quyền truy cập');
       }

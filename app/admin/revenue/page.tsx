@@ -4,12 +4,51 @@ import { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { adminApi } from '@/lib/api/admin';
 import toast from 'react-hot-toast';
-import { Download, Search, Filter, Eye, Edit } from 'lucide-react';
+import { Download, Search, Filter, Eye, Edit, TrendingUp, Activity, CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import {
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from 'recharts';
+
+// Màu sắc phù hợp với nghiệp vụ y tế
+const CHART_COLORS = {
+  primary: '#3b82f6',      // Blue
+  success: '#10b981',      // Green
+  warning: '#f59e0b',      // Amber
+  info: '#60a5fa',         // Light Blue
+  purple: '#a78bfa',       // Purple
+  teal: '#14b8a6',         // Teal
+  red: '#ef4444',           // Red
+  orange: '#f97316',       // Orange
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  COMPLETED: CHART_COLORS.success,
+  PENDING: CHART_COLORS.warning,
+  FAILED: CHART_COLORS.red,
+  CANCELLED: CHART_COLORS.red,
+  REFUNDED: CHART_COLORS.orange,
+};
 
 export default function RevenuePage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [stats, setStats] = useState<any>({});
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [transactionStatusData, setTransactionStatusData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
   const [startDate, setStartDate] = useState('');
@@ -28,26 +67,117 @@ export default function RevenuePage() {
       if (startDate) params.startDate = new Date(startDate).toISOString();
       if (endDate) params.endDate = new Date(endDate).toISOString();
 
-      const [transRes, statsRes] = await Promise.all([
+      // Luôn gửi date range mặc định (6 tháng gần nhất) cho statistics để có dữ liệu biểu đồ
+      // Backend yêu cầu format ISO DATE_TIME (LocalDateTime), không có timezone
+      let statsStartDateStr: string | undefined;
+      let statsEndDateStr: string | undefined;
+      
+      if (startDate && endDate) {
+        // Nếu có date range từ filter, sử dụng nó
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        // Format: YYYY-MM-DDTHH:mm:ss (không có timezone, backend sẽ parse thành LocalDateTime)
+        statsStartDateStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}T00:00:00`;
+        statsEndDateStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}T23:59:59`;
+      } else {
+        // Mặc định: 6 tháng gần nhất
+        const end = new Date();
+        const start = new Date();
+        start.setMonth(start.getMonth() - 6);
+        // Đảm bảo startDate < endDate
+        statsStartDateStr = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}-${String(start.getDate()).padStart(2, '0')}T00:00:00`;
+        statsEndDateStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}T23:59:59`;
+      }
+
+      // Sử dụng Promise.allSettled để không bị fail nếu một trong hai API fail
+      const [transRes, statsRes] = await Promise.allSettled([
         adminApi.revenue.getTransactions(params),
         adminApi.revenue.getStatistics({
-          startDate: startDate ? new Date(startDate).toISOString() : undefined,
-          endDate: endDate ? new Date(endDate).toISOString() : undefined,
+          startDate: statsStartDateStr,
+          endDate: statsEndDateStr,
         }),
       ]);
-      console.log('Revenue API responses:', { transRes, statsRes });
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Revenue API responses:', { transRes, statsRes });
+      }
       
-      if (transRes.data && transRes.data.data) {
-        const pageResponse = transRes.data.data;
+      // Process transactions
+      if (transRes.status === 'fulfilled' && transRes.value.data && transRes.value.data.data) {
+        const pageResponse = transRes.value.data.data;
         setTransactions(pageResponse.content || []);
         setTotalPages(pageResponse.pageable?.totalPages || 0);
         setTotalElements(pageResponse.pageable?.totalElements || 0);
+      } else if (transRes.status === 'rejected') {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Error fetching transactions:', transRes.reason);
+        }
       }
-      if (statsRes.data && statsRes.data.data) {
-        setStats(statsRes.data.data);
+
+      // Process statistics
+      if (statsRes.status === 'fulfilled' && statsRes.value.data && statsRes.value.data.data) {
+        const statsData = statsRes.value.data.data;
+        setStats(statsData);
+
+        // Format revenue by month data for chart
+        if (statsData.revenueByMonth && statsData.revenueByMonth.length > 0) {
+          const formatted = statsData.revenueByMonth.map((item: any) => ({
+            month: item.month || '',
+            revenue: item.revenue ? parseFloat(item.revenue.toString()) : 0,
+            transactions: item.transactionCount || 0,
+          }));
+          setRevenueData(formatted);
+        } else if (statsData.totalRevenue && statsData.totalRevenue > 0) {
+          // Fallback: Nếu không có monthly data nhưng có tổng doanh thu, tạo một điểm dữ liệu từ tổng
+          // Để hiển thị biểu đồ thay vì "Chưa có dữ liệu"
+          const currentMonth = new Date().toLocaleDateString('vi-VN', { month: 'short', year: 'numeric' });
+          setRevenueData([{
+            month: currentMonth,
+            revenue: parseFloat(statsData.totalRevenue.toString()),
+            transactions: statsData.totalTransactions || 0,
+          }]);
+        } else {
+          // Không có dữ liệu gì cả
+          setRevenueData([]);
+        }
+
+        // Format transaction status distribution for pie chart
+        const statusData = [
+          { name: 'Hoàn thành', value: statsData.completedTransactions || 0, status: 'COMPLETED' },
+          { name: 'Đang chờ', value: statsData.pendingTransactions || 0, status: 'PENDING' },
+          { name: 'Thất bại', value: statsData.failedTransactions || 0, status: 'FAILED' },
+        ].filter(item => item.value > 0);
+        setTransactionStatusData(statusData);
+        
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Revenue stats data:', {
+            revenueByMonth: statsData.revenueByMonth,
+            revenueData,
+            transactionStatusData: statusData,
+            totalRevenue: statsData.totalRevenue,
+            totalTransactions: statsData.totalTransactions,
+          });
+        }
+      } else if (statsRes.status === 'rejected') {
+        // Nếu statistics API fail (500 error), vẫn hiển thị stats từ transactions nếu có
+        const error = statsRes.reason;
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Statistics API failed:', error?.response?.status, error?.response?.data);
+        }
+        
+        // Nếu là 500 error, có thể là do date range không hợp lệ hoặc backend issue
+        // Set empty arrays để hiển thị "Chưa có dữ liệu" thay vì crash
+        setRevenueData([]);
+        setTransactionStatusData([]);
+        
+        // Vẫn hiển thị error toast để user biết
+        if (error?.response?.status === 500) {
+          toast.error('Lỗi khi tải thống kê doanh thu. Vui lòng thử lại sau.');
+        }
       }
     } catch (error: any) {
-      console.error('Error fetching revenue data:', error);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Error fetching revenue data:', error);
+      }
       const errorMsg = error.response?.data?.message || 
                       error.response?.data?.error ||
                       `Lỗi ${error.response?.status}: ${error.response?.statusText}` ||
@@ -122,6 +252,25 @@ export default function RevenuePage() {
     }).format(amount);
   };
 
+  // Custom tooltip cho charts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-semibold text-gray-900 mb-2">{label}</p>
+          {payload.map((entry: any, index: number) => (
+            <p key={index} className="text-sm" style={{ color: entry.color }}>
+              {entry.name}: {entry.name.includes('Doanh thu') || entry.name.includes('revenue') 
+                ? formatCurrency(entry.value) 
+                : entry.value}
+            </p>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -133,53 +282,135 @@ export default function RevenuePage() {
           </p>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards with Charts */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
+          {/* Total Revenue Card with Chart */}
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg shadow-lg p-6 border border-blue-200">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-sm text-gray-600">Tổng doanh thu</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-sm text-blue-700 font-medium">Tổng doanh thu</p>
+                <p className="text-2xl font-bold text-blue-900 mt-1">
                   {stats.totalRevenue ? formatCurrency(stats.totalRevenue) : '0 ₫'}
                 </p>
-                <p className="text-xs text-green-600 mt-2">+12%</p>
+                <p className="text-xs text-blue-600 mt-2 flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  <span>+12%</span>
+                </p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                💳
+              <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center shadow-md">
+                <TrendingUp className="h-6 w-6 text-white" />
               </div>
             </div>
+            {loading ? (
+              <div className="h-32 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : revenueData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={120}>
+                <AreaChart data={revenueData}>
+                  <defs>
+                    <linearGradient id="colorRevenueCard" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={CHART_COLORS.primary} stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor={CHART_COLORS.primary} stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke={CHART_COLORS.primary}
+                    strokeWidth={2}
+                    fill="url(#colorRevenueCard)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-32 flex items-center justify-center text-blue-600 text-sm">
+                Chưa có dữ liệu
+              </div>
+            )}
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
+          {/* Transaction Count Card with Chart */}
+          <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg shadow-lg p-6 border border-purple-200">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-sm text-gray-600">Số lượng giao dịch</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-sm text-purple-700 font-medium">Số lượng giao dịch</p>
+                <p className="text-2xl font-bold text-purple-900 mt-1">
                   {stats.totalTransactions || 0}
                 </p>
-                <p className="text-xs text-green-600 mt-2">+5%</p>
+                <p className="text-xs text-purple-600 mt-2 flex items-center gap-1">
+                  <Activity className="h-3 w-3" />
+                  <span>+5%</span>
+                </p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                📄
+              <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center shadow-md">
+                <Activity className="h-6 w-6 text-white" />
               </div>
             </div>
+            {loading ? (
+              <div className="h-32 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-purple-500"></div>
+              </div>
+            ) : revenueData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={120}>
+                <BarChart data={revenueData}>
+                  <Bar dataKey="transactions" radius={[4, 4, 0, 0]} fill={CHART_COLORS.purple} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-32 flex items-center justify-center text-purple-600 text-sm">
+                Chưa có dữ liệu
+              </div>
+            )}
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
+          {/* Success Rate Card with Pie Chart */}
+          <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg shadow-lg p-6 border border-green-200">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-sm text-gray-600">Tỷ lệ thành công</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-sm text-green-700 font-medium">Tỷ lệ thành công</p>
+                <p className="text-2xl font-bold text-green-900 mt-1">
                   {stats.completedTransactions && stats.totalTransactions
                     ? ((stats.completedTransactions / stats.totalTransactions) * 100).toFixed(1)
                     : '0'}%
                 </p>
-                <p className="text-xs text-green-600 mt-2">+1.2%</p>
+                <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  <span>+1.2%</span>
+                </p>
               </div>
-              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                ✅
+              <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center shadow-md">
+                <CheckCircle className="h-6 w-6 text-white" />
               </div>
             </div>
+            {loading ? (
+              <div className="h-32 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-green-500"></div>
+              </div>
+            ) : transactionStatusData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={120}>
+                <PieChart>
+                  <Pie
+                    data={transactionStatusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={25}
+                    outerRadius={45}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {transactionStatusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status] || CHART_COLORS.info} />
+                    ))}
+                  </Pie>
+                  <Tooltip content={<CustomTooltip />} />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-32 flex items-center justify-center text-green-600 text-sm">
+                Chưa có dữ liệu
+              </div>
+            )}
           </div>
         </div>
 

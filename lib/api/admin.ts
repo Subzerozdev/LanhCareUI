@@ -78,24 +78,34 @@ export const adminApi = {
         // Backend có thể throw 500 nếu có enum value không hợp lệ trong healthProfile
         // Thử request với params đơn giản hơn
         const response = await api.get<ApiResponse<PageResponse<AdminUserResponse>>>('/api/admin/users', { params });
-        console.log('Users getAll response:', response.data);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Users getAll response:', response.data);
+        }
         // Backend trả về ApiResponse<T>, response.data là ApiResponse
         // response.data.data là PageResponse<AdminUserResponse>
         return response;
       } catch (error: any) {
-        console.error('Users getAll error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Users getAll error:', error);
+        }
         
         // Nếu là 500 error do enum parsing, thử lại với smaller page size
         if (error.response?.status === 500 && 
             error.response?.data?.message?.includes('No enum constant')) {
-          console.warn('Retrying with smaller page size due to enum parsing error');
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Retrying with smaller page size due to enum parsing error');
+          }
           try {
             const retryParams = { ...params, size: 10, page: 0 };
             const retryResponse = await api.get<ApiResponse<PageResponse<AdminUserResponse>>>('/api/admin/users', { params: retryParams });
-            console.log('Retry successful:', retryResponse.data);
+            if (process.env.NODE_ENV === 'development') {
+              console.log('Retry successful:', retryResponse.data);
+            }
             return retryResponse;
           } catch (retryError) {
-            console.error('Retry also failed:', retryError);
+            if (process.env.NODE_ENV === 'development') {
+              console.error('Retry also failed:', retryError);
+            }
             throw error; // Throw original error
           }
         }
@@ -106,10 +116,14 @@ export const adminApi = {
     getById: async (id: number) => {
       try {
         const response = await api.get<ApiResponse<AdminUserDetailResponse>>(`/api/admin/users/${id}`);
-        console.log('Users getById response:', response.data);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Users getById response:', response.data);
+        }
         return response;
       } catch (error: any) {
-        console.error('Users getById error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Users getById error:', error);
+        }
         throw error;
       }
     },
@@ -121,12 +135,18 @@ export const adminApi = {
           role: data.role, // Should be string like "USER", "ADMIN", "STAFF"
           status: data.status || 'ACTIVE', // Should be string like "ACTIVE", "INACTIVE", etc.
         };
-        console.log('Users create request:', requestData);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Users create request:', requestData);
+        }
         const response = await api.post<ApiResponse<AdminUserResponse>>('/api/admin/users', requestData);
-        console.log('Users create response:', response.data);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Users create response:', response.data);
+        }
         return response;
       } catch (error: any) {
-        console.error('Users create error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Users create error:', error);
+        }
         throw error;
       }
     },
@@ -137,12 +157,18 @@ export const adminApi = {
         if (data.fullname !== undefined) requestData.fullname = data.fullname;
         if (data.role !== undefined) requestData.role = data.role; // Should be string
         if (data.status !== undefined) requestData.status = data.status; // Should be string
-        console.log('Users update request:', requestData);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Users update request:', requestData);
+        }
         const response = await api.put<ApiResponse<AdminUserResponse>>(`/api/admin/users/${id}`, requestData);
-        console.log('Users update response:', response.data);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Users update response:', response.data);
+        }
         return response;
       } catch (error: any) {
-        console.error('Users update error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Users update error:', error);
+        }
         throw error;
       }
     },
@@ -151,7 +177,9 @@ export const adminApi = {
         const response = await api.patch<ApiResponse<AdminUserResponse>>(`/api/admin/users/${id}/status`, { status });
         return response;
       } catch (error: any) {
-        console.error('Users changeStatus error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Users changeStatus error:', error);
+        }
         throw error;
       }
     },
@@ -160,7 +188,9 @@ export const adminApi = {
         const response = await api.delete<ApiResponse<void>>(`/api/admin/users/${id}`);
         return response;
       } catch (error: any) {
-        console.error('Users delete error:', error);
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Users delete error:', error);
+        }
         throw error;
       }
     },
@@ -299,12 +329,70 @@ export const adminApi = {
         api.get<ApiResponse<any[]>>('/api/admin/nutrition/food-types'),
       create: (data: any) =>
         api.post<ApiResponse<any>>('/api/admin/nutrition/food-types', data),
+      update: (id: number, data: any) =>
+        api.put<ApiResponse<any>>(`/api/admin/nutrition/food-types/${id}`, data),
+      delete: (id: number) =>
+        api.delete<ApiResponse<void>>(`/api/admin/nutrition/food-types/${id}`),
     },
     nutrients: {
       getAll: () =>
         api.get<ApiResponse<any[]>>('/api/admin/nutrition/nutrients'),
+      getById: (id: number) =>
+        api.get<ApiResponse<any>>(`/api/admin/nutrition/nutrients/${id}`),
       create: (data: any) =>
         api.post<ApiResponse<any>>('/api/admin/nutrition/nutrients', data),
+      update: (id: number, data: any) =>
+        api.put<ApiResponse<any>>(`/api/admin/nutrition/nutrients/${id}`, data),
+      delete: (id: number) =>
+        api.delete<ApiResponse<void>>(`/api/admin/nutrition/nutrients/${id}`),
     },
+  },
+
+  // Dietary Restrictions
+  dietaryRestrictions: {
+    getAll: (params?: any) =>
+      api.get<ApiResponse<PageResponse<any>>>('/api/admin/dietary-restrictions', { params }),
+    getById: (id: number) =>
+      api.get<ApiResponse<any>>(`/api/admin/dietary-restrictions/${id}`),
+    create: (data: any) =>
+      api.post<ApiResponse<any>>('/api/admin/dietary-restrictions', data),
+    update: (id: number, data: any) =>
+      api.put<ApiResponse<any>>(`/api/admin/dietary-restrictions/${id}`, data),
+    changeStatus: (id: number, status: string) =>
+      api.patch<ApiResponse<any>>(`/api/admin/dietary-restrictions/${id}/status?status=${status}`),
+    delete: (id: number) =>
+      api.delete<ApiResponse<void>>(`/api/admin/dietary-restrictions/${id}`),
+  },
+
+  // Exercise Types
+  exerciseTypes: {
+    getAll: (params?: any) =>
+      api.get<ApiResponse<PageResponse<any>>>('/api/admin/exercise-types', { params }),
+    getById: (id: number) =>
+      api.get<ApiResponse<any>>(`/api/admin/exercise-types/${id}`),
+    create: (data: any) =>
+      api.post<ApiResponse<any>>('/api/admin/exercise-types', data),
+    update: (id: number, data: any) =>
+      api.put<ApiResponse<any>>(`/api/admin/exercise-types/${id}`, data),
+    delete: (id: number) =>
+      api.delete<ApiResponse<void>>(`/api/admin/exercise-types/${id}`),
+    restore: (id: number) =>
+      api.patch<ApiResponse<any>>(`/api/admin/exercise-types/${id}/restore`),
+  },
+
+  // Medical Specialties
+  medicalSpecialties: {
+    getAll: (params?: any) =>
+      api.get<ApiResponse<PageResponse<any>>>('/api/admin/medical-specialties', { params }),
+    getById: (id: number) =>
+      api.get<ApiResponse<any>>(`/api/admin/medical-specialties/${id}`),
+    create: (data: any) =>
+      api.post<ApiResponse<any>>('/api/admin/medical-specialties', data),
+    update: (id: number, data: any) =>
+      api.put<ApiResponse<any>>(`/api/admin/medical-specialties/${id}`, data),
+    changeStatus: (id: number, status: string) =>
+      api.patch<ApiResponse<any>>(`/api/admin/medical-specialties/${id}/status?status=${status}`),
+    delete: (id: number) =>
+      api.delete<ApiResponse<void>>(`/api/admin/medical-specialties/${id}`),
   },
 };

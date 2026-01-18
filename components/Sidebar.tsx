@@ -14,6 +14,9 @@ import {
   UtensilsCrossed,
   Settings,
   LogOut,
+  ShieldAlert,
+  Dumbbell,
+  Stethoscope,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import clsx from 'clsx';
@@ -58,6 +61,21 @@ const menuItems = [
     title: 'Dinh dưỡng',
     icon: UtensilsCrossed,
     href: '/admin/nutrition',
+  },
+  {
+    title: 'Hạn chế dinh dưỡng',
+    icon: ShieldAlert,
+    href: '/admin/dietary-restrictions',
+  },
+  {
+    title: 'Loại bài tập',
+    icon: Dumbbell,
+    href: '/admin/exercise-types',
+  },
+  {
+    title: 'Chuyên khoa y tế',
+    icon: Stethoscope,
+    href: '/admin/medical-specialties',
   },
   {
     title: 'TÀI CHÍNH',

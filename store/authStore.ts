@@ -20,9 +20,13 @@ export const useAuthStore = create<AuthState>()((set) => ({
       login: async (email: string, password: string) => {
         set({ isLoading: true });
         try {
-          console.log('Calling login API...');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Calling login API...');
+          }
           const response = await authApi.login({ email, password });
-          console.log('Login API response:', response);
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Login API response:', response);
+          }
           
           // Kiểm tra role phải là ADMIN
           if (response.role !== 'ADMIN') {
@@ -59,12 +63,16 @@ export const useAuthStore = create<AuthState>()((set) => ({
             isLoading: false,
           });
 
-          console.log('Login successful, state updated');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Login successful, state updated');
+          }
           
           // Không cần gọi getCurrentAccount vì endpoint có thể có vấn đề
           // Thông tin từ login response đã đủ
         } catch (error: any) {
-          console.error('Login error:', error);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Login error:', error);
+          }
           set({ isLoading: false, isAuthenticated: false, token: null, user: null });
           // Xóa token nếu có lỗi
           if (typeof window !== 'undefined') {
@@ -114,9 +122,13 @@ export const useAuthStore = create<AuthState>()((set) => ({
             isAuthenticated: true,
           });
           
-          console.log('Auth check successful from localStorage');
+          if (process.env.NODE_ENV === 'development') {
+            console.log('Auth check successful from localStorage');
+          }
         } catch (error: any) {
-          console.error('Check auth error:', error);
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Check auth error:', error);
+          }
           set({ isAuthenticated: false, user: null, token: null });
           if (typeof window !== 'undefined') {
             localStorage.removeItem('token');

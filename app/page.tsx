@@ -11,15 +11,13 @@ export default function Home() {
   useEffect(() => {
     const init = async () => {
       await checkAuth();
-      // Đợi state update
-      setTimeout(() => {
-        const state = useAuthStore.getState();
-        if (state.isAuthenticated && state.user?.role === 'ADMIN') {
-          router.push('/dashboard');
-        } else {
-          router.push('/login');
-        }
-      }, 100);
+      // Check state ngay sau khi checkAuth (không cần setTimeout)
+      const state = useAuthStore.getState();
+      if (state.isAuthenticated && state.user?.role === 'ADMIN') {
+        router.push('/dashboard');
+      } else {
+        router.push('/login');
+      }
     };
     init();
   }, [router, checkAuth]);
