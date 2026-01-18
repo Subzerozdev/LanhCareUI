@@ -130,7 +130,7 @@ export default function UserModal({ user, onClose, onSuccess }: UserModalProps) 
                       message: 'Email không hợp lệ',
                     },
                   })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
                 />
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
@@ -150,7 +150,7 @@ export default function UserModal({ user, onClose, onSuccess }: UserModalProps) 
                       message: 'Mật khẩu phải có ít nhất 6 ký tự',
                     },
                   })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
                 />
                 {errors.password && (
                   <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
@@ -166,7 +166,7 @@ export default function UserModal({ user, onClose, onSuccess }: UserModalProps) 
             <input
               type="text"
               {...register('fullname', { required: 'Họ và tên là bắt buộc' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
             />
             {errors.fullname && (
               <p className="mt-1 text-sm text-red-600">{errors.fullname.message}</p>
@@ -179,7 +179,7 @@ export default function UserModal({ user, onClose, onSuccess }: UserModalProps) 
             </label>
             <select
               {...register('role', { required: 'Vai trò là bắt buộc' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
             >
               <option value="USER">Người dùng</option>
               <option value="STAFF">Nhân viên</option>
@@ -196,7 +196,7 @@ export default function UserModal({ user, onClose, onSuccess }: UserModalProps) 
             </label>
             <select
               {...register('status', { required: 'Trạng thái là bắt buộc' })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
             >
               <option value="ACTIVE">Hoạt động</option>
               <option value="INACTIVE">Ngừng hoạt động</option>

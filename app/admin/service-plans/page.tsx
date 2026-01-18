@@ -118,7 +118,7 @@ export default function ServicePlansPage() {
                   placeholder="vd: Gói cao cấp..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
                 />
               </div>
             </div>
@@ -301,7 +301,7 @@ function ServicePlanModal({ plan, onClose, onSuccess }: { plan: any; onClose: ()
               required
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
             />
           </div>
 
@@ -311,7 +311,7 @@ function ServicePlanModal({ plan, onClose, onSuccess }: { plan: any; onClose: ()
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
             />
           </div>
 
@@ -326,7 +326,7 @@ function ServicePlanModal({ plan, onClose, onSuccess }: { plan: any; onClose: ()
               step="0.01"
               value={formData.price}
               onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
             />
           </div>
 
@@ -341,7 +341,7 @@ function ServicePlanModal({ plan, onClose, onSuccess }: { plan: any; onClose: ()
                 min="1"
                 value={formData.periodValue}
                 onChange={(e) => setFormData({ ...formData, periodValue: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
               />
             </div>
             <div>
@@ -351,7 +351,7 @@ function ServicePlanModal({ plan, onClose, onSuccess }: { plan: any; onClose: ()
               <select
                 value={formData.periodUnit}
                 onChange={(e) => setFormData({ ...formData, periodUnit: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
               >
                 <option value="MONTH">Tháng</option>
                 <option value="YEAR">Năm</option>
@@ -364,7 +364,7 @@ function ServicePlanModal({ plan, onClose, onSuccess }: { plan: any; onClose: ()
             <select
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-gray-900"
             >
               <option value="ACTIVE">Hoạt động</option>
               <option value="INACTIVE">Ngừng hoạt động</option>

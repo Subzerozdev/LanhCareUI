@@ -96,7 +96,7 @@ export default function LoginPage() {
                   },
                 })}
                 placeholder="admin@lanhcare.com"
-                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900"
               />
             </div>
             {errors.email && (
@@ -123,7 +123,7 @@ export default function LoginPage() {
                   },
                 })}
                 placeholder="••••••••••"
-                className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                className="block w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition text-gray-900"
               />
               <button
                 type="button"
