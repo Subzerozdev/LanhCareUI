@@ -143,7 +143,7 @@ export default function PostsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <div className="text-sm text-gray-600 mb-2">Nội dung > Bài viết</div>
+          <div className="text-sm text-gray-600 mb-2">Nội dung {'>'} Bài viết</div>
           <h1 className="text-3xl font-bold text-gray-900">Quản lý bài viết</h1>
           <p className="text-gray-600 mt-1">
             Xem xét, phê duyệt hoặc từ chối các bài viết sức khỏe do người dùng gửi.
